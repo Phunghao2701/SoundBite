@@ -7,8 +7,10 @@ const SoundCard = ({ sound }) => {
   const audioRef = useRef(null);
 
   // Dùng proxy để tránh lỗi 502/CORS khi fetch từ Vercel
-  const getProxyUrl = (url) =>
-    `https://images.weserv.nl/?url=${encodeURIComponent(url)}&default=black`;
+  const getProxyUrl = (url) => {
+    if (!url) return "";
+    return `https://images.weserv.nl/?url=${encodeURIComponent(url)}`;
+  };
 
   const previewUrl = sound.previews["preview-hq-mp3"];
   // Nếu bị chặn nặng quá, đôi khi phải dùng proxy cho cả audio (nhưng thử trực tiếp trước)
