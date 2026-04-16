@@ -9,7 +9,7 @@ const Navbar = ({ setQuery }) => {
             <AudioWaveform className="text-white" size={24} />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white font-sans">
-            SFX<span className="text-gradient">Hub</span>
+            Sound<span className="text-gradient">Bite</span>
           </h1>
         </div>
         

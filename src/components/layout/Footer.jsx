@@ -10,7 +10,7 @@ const Footer = () => {
             <div className="flex items-center gap-2 mb-2">
               <AudioWaveform className="text-primary" size={20} />
               <h2 className="text-xl font-bold text-white tracking-tight">
-                SFX<span className="text-gradient">Hub</span>
+                Sound<span className="text-gradient">Bite</span>
               </h2>
             </div>
             <p className="text-gray-500 text-sm">
@@ -32,7 +32,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-white/5 mt-8 pt-8 text-center text-gray-600 text-xs">
-          © {new Date().getFullYear()} SFX Hub. Engineered with precision.
+          © {new Date().getFullYear()} SoundBite. Engineered with precision.
         </div>
       </div>
     </footer>
