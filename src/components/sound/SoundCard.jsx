@@ -25,8 +25,10 @@ const SoundCard = ({ sound }) => {
 
   const togglePlay = () => {
     try {
+      // Bọc link audio qua proxy AllOrigins để lách luật CORS/502
+      const proxiedAudioUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(previewUrl)}`;
       if (!audioRef.current) {
-        audioRef.current = new Audio(safePreviewUrl);
+        audioRef.current = new Audio(proxiedAudioUrl);
         audioRef.current.onended = () => setIsPlaying(false);
         // Bắt lỗi nếu file audio không load được (lỗi 502)
         audioRef.current.onerror = () => {
