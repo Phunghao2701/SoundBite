@@ -5,8 +5,6 @@ import SoundGrid from "../components/sound/SoundGrid";
 import Footer from "../components/layout/Footer";
 import Pagination from "../components/ui/Pagination";
 
-const API_KEY = import.meta.env.VITE_FREESOUND_KEY;
-
 const Home = () => {
   const [sounds, setSounds] = useState([]);
   const [query, setQuery] = useState("meme");
@@ -14,31 +12,42 @@ const Home = () => {
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
-  // Reset về trang 1 mỗi khi đổi từ khóa tìm kiếm
   const handleQueryChange = (newQuery) => {
     setQuery(newQuery);
-    setPage(1);
+    setPage(1); // Reset về trang đầu khi đổi search
   };
 
   useEffect(() => {
     const fetchSounds = async () => {
       setLoading(true);
       try {
-        const url = `https://freesound.org/apiv2/search/text/?query=${query}&fields=id,name,previews,images&page_size=24&page=${page}`;
+        // Sử dụng MyInstants API (Vượt qua lỗi 502 của Freesound)
+        // Lưu ý: API này phân trang theo trang 1, 2, 3...
+        const url = `https://myinstants-api.vercel.app/api/search?query=${query}&page=${page}`;
 
-        const res = await fetch(url, {
-          headers: {
-            Authorization: `Token ${API_KEY}`,
-          },
-        });
-        if (!res.ok) {
-          throw new Error(`Lỗi rồi: ${res.status}`);
-        }
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Lỗi rồi: ${res.status}`);
+
         const data = await res.json();
-        setSounds(data.results || []);
-        setTotalCount(data.count || 0);
+
+        // Map lại dữ liệu để khớp với Props của SoundCard
+        const formattedSounds = data.map((item) => ({
+          id: item.slug || Math.random(),
+          name: item.title,
+          // MyInstants để link mp3 ở trường 'sound'
+          previews: { "preview-hq-mp3": item.sound },
+          // Waveform có thể dùng image thumbnail của meme đó
+          images: { waveform_m: item.image || "" },
+        }));
+
+        setSounds(formattedSounds);
+
+        // MyInstants API này thường không trả về total_count chính xác trong search
+        // Mình sẽ giả định nếu có kết quả thì cho phép bấm Next trang tiếp theo
+        setTotalCount(data.length === 0 ? 0 : 1000);
       } catch (err) {
-        console.error("Lỗi gọi API Freesound:", err);
+        console.error("Lỗi gọi API MyInstants:", err);
+        setSounds([]);
       } finally {
         setLoading(false);
       }
@@ -47,8 +56,7 @@ const Home = () => {
   }, [query, page]);
 
   return (
-    <div className="w-full h-full flex flex-col">
-      {/* Truyền hàm reset page vào Navbar và Tabs */}
+    <div className="min-h-screen bg-[#0f172a] flex flex-col">
       <Navbar setQuery={handleQueryChange} />
 
       <main className="flex-grow container mx-auto px-4 py-8">
@@ -57,26 +65,52 @@ const Home = () => {
         {loading ? (
           <div className="flex justify-center items-center h-64 flex-col gap-4">
             <div className="flex gap-2 items-end h-16">
-              <span className="w-2 bg-primary h-1/3 rounded-t-sm animate-bounce" style={{ animationDelay: '0ms' }}></span>
-              <span className="w-2 bg-secondary h-full rounded-t-sm animate-bounce" style={{ animationDelay: '150ms' }}></span>
-              <span className="w-2 bg-primary h-1/2 rounded-t-sm animate-bounce" style={{ animationDelay: '300ms' }}></span>
-              <span className="w-2 bg-secondary h-4/5 rounded-t-sm animate-bounce" style={{ animationDelay: '450ms' }}></span>
-              <span className="w-2 bg-primary h-2/3 rounded-t-sm animate-bounce" style={{ animationDelay: '600ms' }}></span>
+              <span
+                className="w-2 bg-indigo-500 h-1/3 rounded-t-sm animate-bounce"
+                style={{ animationDelay: "0ms" }}
+              ></span>
+              <span
+                className="w-2 bg-purple-500 h-full rounded-t-sm animate-bounce"
+                style={{ animationDelay: "150ms" }}
+              ></span>
+              <span
+                className="w-2 bg-indigo-500 h-1/2 rounded-t-sm animate-bounce"
+                style={{ animationDelay: "300ms" }}
+              ></span>
+              <span
+                className="w-2 bg-purple-500 h-4/5 rounded-t-sm animate-bounce"
+                style={{ animationDelay: "450ms" }}
+              ></span>
+              <span
+                className="w-2 bg-indigo-500 h-2/3 rounded-t-sm animate-bounce"
+                style={{ animationDelay: "600ms" }}
+              ></span>
             </div>
-            <p className="text-gray-400 font-medium tracking-widest text-sm uppercase animate-pulse">Loading Sounds...</p>
+            <p className="text-gray-400 font-medium tracking-widest text-sm uppercase animate-pulse">
+              Đang tải âm thanh...
+            </p>
           </div>
         ) : (
-          /* Dùng Fragment để bọc 2 component này lại */
           <>
-            <SoundGrid sounds={sounds} />
-            <Pagination
-              currentPage={page}
-              totalCount={totalCount}
-              onPageChange={(newPage) => {
-                setPage(newPage);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-            />
+            {sounds.length > 0 ? (
+              <>
+                <SoundGrid sounds={sounds} />
+                <Pagination
+                  currentPage={page}
+                  totalCount={totalCount}
+                  onPageChange={(newPage) => {
+                    setPage(newPage);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                />
+              </>
+            ) : (
+              <div className="text-center py-20">
+                <p className="text-gray-500">
+                  Không tìm thấy âm thanh nào cho "{query}"
+                </p>
+              </div>
+            )}
           </>
         )}
       </main>
